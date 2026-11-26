@@ -18,7 +18,7 @@ function ShowSidebar() {
         iconOnly
         onClick={toggle}
         aria-label="Show sidebar"
-        className="mr-1 text-ink-3"
+        className="mr-1 text-ink-3 hover:text-ink [&_.tabler-icon]:size-[19px]"
       >
         <IconLayoutSidebarLeftExpand />
       </Button>
@@ -44,7 +44,7 @@ export function Page({ crumbs, tools, flush = false, children }: PageProps) {
         data-tauri-drag-region
         className={clsx(
           "flex h-[52px] shrink-0 items-center gap-2 border-b-[0.5px] border-line pr-3 transition-[padding] duration-220 ease-out",
-          collapsed || bare ? "pl-[86px]" : "pl-5",
+          collapsed || bare ? "pl-[88px]" : "pl-5",
         )}
       >
         {collapsed && !bare ? <ShowSidebar /> : null}

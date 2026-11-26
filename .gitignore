@@ -15,3 +15,4 @@ apps/desktop/src-tauri/resources/tools/*
 apps/desktop/src-tauri/resources/engine/*
 !apps/desktop/src-tauri/resources/engine/README.md
 vmm/.build/
+tmp/

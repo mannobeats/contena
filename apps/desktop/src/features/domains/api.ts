@@ -11,7 +11,7 @@ const REFRESH_MS = 3000;
 export function useDomains() {
   return useQuery({
     queryKey: queryKeys.domains,
-    queryFn: commands.domainsStatus,
+    queryFn: () => commands.domainsStatus(),
     refetchInterval: REFRESH_MS,
   });
 }
@@ -22,7 +22,7 @@ type Change<T> = { run: (input: T) => Promise<null>; done: (input: T) => string;
 function useDomainsChange<T>({ run, done, failed }: Change<T>) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: run,
+    mutationFn: (input: T) => run(input),
     onSuccess: (_, input) => toast.success(done(input)),
     onError: (error) => {
       if (!(isCommandError(error) && error.kind === "cancelled")) {
@@ -61,12 +61,12 @@ export function useRemoveRoute() {
 export function useResolver() {
   return {
     install: useDomainsChange<void>({
-      run: commands.domainsInstallResolver,
+      run: () => commands.domainsInstallResolver(),
       done: () => "Your Mac now finds .contena.local names",
       failed: "Name resolution wasn't set up",
     }),
     uninstall: useDomainsChange<void>({
-      run: commands.domainsUninstallResolver,
+      run: () => commands.domainsUninstallResolver(),
       done: () => "Removed the resolver",
       failed: "The resolver wasn't removed",
     }),
@@ -76,12 +76,12 @@ export function useResolver() {
 export function useCertificate() {
   return {
     trust: useDomainsChange<void>({
-      run: commands.domainsTrustCa,
+      run: () => commands.domainsTrustCa(),
       done: () => "Certificate trusted. https:// works in Safari, Chrome and Firefox.",
       failed: "The certificate wasn't trusted",
     }),
     untrust: useDomainsChange<void>({
-      run: commands.domainsUntrustCa,
+      run: () => commands.domainsUntrustCa(),
       done: () => "Removed the local certificate",
       failed: "The certificate wasn't removed",
     }),

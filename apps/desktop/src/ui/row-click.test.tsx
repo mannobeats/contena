@@ -4,11 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { renderWithApp } from "@/test/harness";
 
-import { Row, Table } from "./table";
+import { openRowOnClick } from "./row-click";
+import { Row } from "./table";
 
 function images(opened: (name: string) => void, acted = () => undefined, picked = () => undefined) {
   renderWithApp(
-    <Table label="Images">
+    <table ref={openRowOnClick} aria-label="Images">
       <tbody>
         <Row>
           <td>
@@ -33,7 +34,7 @@ function images(opened: (name: string) => void, acted = () => undefined, picked 
           </td>
         </Row>
       </tbody>
-    </Table>,
+    </table>,
   );
 }
 

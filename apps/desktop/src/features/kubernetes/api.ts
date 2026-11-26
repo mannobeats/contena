@@ -29,7 +29,7 @@ export function useCluster() {
   const { data: engine } = useEngineStatus();
   return useQuery({
     queryKey: queryKeys.kubernetes,
-    queryFn: commands.kubernetesCluster,
+    queryFn: () => commands.kubernetesCluster(),
     enabled: isServing(engine?.phase) && engine?.config.kubernetes.enabled === true,
     refetchInterval: (query) => (query.state.status === "error" ? 3000 : false),
   });
@@ -47,7 +47,7 @@ function useKubeAction<Args, Output>(
 ) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: run,
+    mutationFn: (args: Args) => run(args),
     onSuccess: (_, args) => toast.success(done(args)),
     onError: (error) =>
       toast.error("Kubernetes didn't accept that", { description: errorMessage(error) }),
@@ -110,7 +110,7 @@ export function useKubeEvents(namespace: string, name: string) {
 export function useKubeconfigPath() {
   return useQuery({
     queryKey: [...queryKeys.kubernetes, "kubeconfig"],
-    queryFn: commands.kubernetesKubeconfigPath,
+    queryFn: () => commands.kubernetesKubeconfigPath(),
     staleTime: Number.POSITIVE_INFINITY,
   });
 }

@@ -1,7 +1,9 @@
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconDots } from "@tabler/icons-react";
 import clsx from "clsx";
 import { ContextMenu as Context, DropdownMenu as Dropdown } from "radix-ui";
 import { type ReactNode, useState } from "react";
+
+import { Button } from "./button";
 
 const surface =
   "z-50 min-w-[200px] origin-(--radix-dropdown-menu-content-transform-origin) rounded-[10px] bg-popover p-[5px] text-13 text-ink shadow-3 backdrop-blur-xl backdrop-saturate-180 animate-pop";
@@ -117,5 +119,31 @@ export function ContextMenu({ entries, children }: { entries: MenuEntry[]; child
         </Context.Content>
       </Context.Portal>
     </Context.Root>
+  );
+}
+
+type MoreMenuProps = {
+  entries: MenuEntry[];
+  /** What the menu is for, read by screen readers: "More for web-1". */
+  target: string;
+  /** `row` is the small grey button at the end of a list row; `toolbar` sits in a page header. */
+  place?: "row" | "toolbar";
+  className?: string;
+};
+
+/** The ⋯ button that opens an object's menu: the same entries as its right-click menu. */
+export function MoreMenu({ entries, target, place = "row", className }: MoreMenuProps) {
+  return (
+    <Menu entries={entries} align="end">
+      <Button
+        variant={place === "row" ? "ghost" : "default"}
+        size={place === "row" ? "sm" : "md"}
+        iconOnly
+        aria-label={`More for ${target}`}
+        className={clsx(place === "row" && "text-ink-3 hover:text-ink", className)}
+      >
+        <IconDots />
+      </Button>
+    </Menu>
   );
 }

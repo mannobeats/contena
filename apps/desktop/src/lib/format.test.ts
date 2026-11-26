@@ -7,6 +7,7 @@ import {
   formatPercent,
   formatRelative,
   plural,
+  shortImage,
 } from "./format";
 
 describe("formatAge", () => {
@@ -62,5 +63,12 @@ describe("plural", () => {
     expect(plural(1, "container")).toBe("1 container");
     expect(plural(3, "container")).toBe("3 containers");
     expect(plural(2, "copy", "copies")).toBe("2 copies");
+  });
+});
+
+describe("shortImage", () => {
+  it("drops a pinned digest but keeps the tag", () => {
+    expect(shortImage(`postgres:18-alpine@sha256:${"a".repeat(64)}`)).toBe("postgres:18-alpine");
+    expect(shortImage("nginx:1.29")).toBe("nginx:1.29");
   });
 });

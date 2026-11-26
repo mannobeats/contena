@@ -11,7 +11,7 @@ const keys = { found: ["update", "found"], check: ["update", "check"] } as const
 export function useUpdateFound() {
   const client = useQueryClient();
   useTauriEvent(events.updateAvailable, (update) => client.setQueryData(keys.found, update));
-  return useQuery({ queryKey: keys.found, queryFn: commands.updateFound });
+  return useQuery({ queryKey: keys.found, queryFn: () => commands.updateFound() });
 }
 
 /** Asks the release server for a newer version each time a view that shows the answer opens. */

@@ -50,7 +50,7 @@ export const machineShell =
 export function useDistros() {
   return useQuery({
     queryKey: machineKeys.distros,
-    queryFn: commands.machineDistros,
+    queryFn: () => commands.machineDistros(),
     staleTime: Number.POSITIVE_INFINITY,
   });
 }
@@ -205,7 +205,7 @@ type Job<T> = {
 function useMachineJob<T>({ run, doing, done, failed }: Job<T>) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: run,
+    mutationFn: (input: T) => run(input),
     onMutate: (input) => toast.loading(doing(input)),
     onSuccess: (_, input, loading) => toast.success(done(input), { id: loading }),
     onError: (error, _, loading) =>

@@ -9,7 +9,7 @@ const FORWARDS = ["kubernetesForwards"] as const;
 
 /** Port forwards to one pod. Rust owns them, so they survive a reload of the window. */
 export function usePodForwards(pod: PodSummary) {
-  const { data } = useQuery({ queryKey: FORWARDS, queryFn: commands.kubernetesForwards });
+  const { data } = useQuery({ queryKey: FORWARDS, queryFn: () => commands.kubernetesForwards() });
   return (
     data?.filter((forward) => forward.namespace === pod.namespace && forward.pod === pod.name) ?? []
   );

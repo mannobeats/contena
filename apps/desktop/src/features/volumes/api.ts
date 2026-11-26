@@ -19,7 +19,7 @@ export function useVolumes() {
   const { data: engine } = useEngineStatus();
   return useQuery({
     queryKey: queryKeys.volumes,
-    queryFn: commands.volumesList,
+    queryFn: () => commands.volumesList(),
     enabled: isServing(engine?.phase),
   });
 }
@@ -90,7 +90,7 @@ export async function pickBackup(): Promise<string | null> {
 export function usePruneVolumes() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: commands.volumesPrune,
+    mutationFn: () => commands.volumesPrune(),
     onSuccess: (report) =>
       toast.success(`Freed ${formatBytes(report.reclaimedBytes)}`, {
         description: `${plural(report.removed, "volume")} deleted`,

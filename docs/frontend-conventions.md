@@ -6,14 +6,14 @@ Tabler icons, Motion.
 
 ## Layout of `apps/desktop/src`
 
-| Folder | Holds |
-|---|---|
-| `app/` | Router, query client, query keys, app-wide event wiring. |
-| `shell/` | The window frame: sidebar, `Page` top bar, command palette, shortcuts. |
+| Folder             | Holds                                                                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/`             | Router, query client, query keys, app-wide event wiring.                                                                                      |
+| `shell/`           | The window frame: sidebar, `Page` top bar, command palette, shortcuts.                                                                        |
 | `features/<area>/` | One folder per sidebar area: `api.ts` (query and mutation hooks), `model.ts` (pure logic, unit-tested), `<area>-page.tsx` and its components. |
-| `ui/` | Design-system primitives. No data fetching, no feature imports. |
-| `lib/` | Framework-free helpers: formatting, logos, theme, IPC helpers, generated bindings. |
-| `styles/` | `tokens.css` (the design tokens) and `app.css` (Tailwind theme and base layer). |
+| `ui/`              | Design-system primitives. No data fetching, no feature imports.                                                                               |
+| `lib/`             | Framework-free helpers: formatting, logos, theme, IPC helpers, generated bindings.                                                            |
+| `styles/`          | `tokens.css` (the design tokens) and `app.css` (Tailwind theme and base layer).                                                               |
 
 Features import from `ui/`, `lib/` and `app/`, and from another feature only through its `api.ts` or
 a component it exists to share (the memory ledger). `ui/` never imports from `features/`.
@@ -34,18 +34,29 @@ a component it exists to share (the memory ledger). `ui/` never imports from `fe
   (`useUi((state) => state.sidebarCollapsed)`), never the whole store.
 - Accessibility: every control is a real `button`, `a`, `input` or Radix primitive with a visible
   focus ring (keyboard use only); icon-only buttons have `aria-label` and a `Tip`. A clickable row
-  puts a `rowLink` link with `data-row-link` in its first cell, inside a `Table` (or a table with
-  `ref={openRowOnClick}`), never `onClick` on `tr`. Don't stretch an `::after` over a row: WebKit
-  doesn't contain it in a `tr`, so it covers the whole table.
+  puts a `rowLink` link with `data-row-link` in its first cell, inside a `DataTable` (or a table
+  with `ref={openRowOnClick}`), never `onClick` on `tr`. Don't stretch an `::after` over a row:
+  WebKit doesn't contain it in a `tr`, so it covers the whole table.
+- Every list is a `DataTable` (`ui/data-table.tsx`), never a hand-built `<table>`. Describe it with
+  `Column`s (`ui/table-layout.ts`) in a `*-columns.tsx` file, with the cells' components in a
+  `*-cells.tsx` beside it. Give each column a pixel `width` except the one that fills (usually the
+  name), a `sortValue` when sorting by it helps, and `optional` with a `priority` when it can step
+  aside in a narrow window. Columns then resize by dragging, sort from the header, hide from the
+  header's right-click menu, and remember all of it under the table's `layoutKey`. Groups (Compose
+  projects, route kinds) pass `groups`, whose header row gets `GroupCells` to line its totals up.
+- A list page is `PageHeading`, then `ListSection` (the sticky filter row, whose height the table's
+  sticky header sits under), then the `DataTable`. Long values go through `Truncate`, states
+  through `StatusLabel`, the ⋯ button through `MoreMenu`, and a cleanup list through `BulkDelete`.
 - Right-click: anything with actions (a row, a card, a file, a tab) opens a menu. Build one
   `MenuEntry[]` (in a `*-menu.ts` or `*-actions.ts`) and pass it to both the row's ⋯ `Menu` and a
   `ContextMenu` around the row. `ContextMenu` is a Radix `asChild` trigger, so the child must be a
   DOM element or a component that spreads its props onto one (`Row` does); otherwise right-click
   silently does nothing. Order entries as macOS does: primary action, other actions, copies,
   destructive last with `danger` and a `…` when it asks first.
-- A list people clean up gets selection: `useSelection` over the selectable rows in order,
-  `SelectAll` and `SelectCell` in the table (with `blocked` saying why a row can't be picked),
-  `SelectionBar` for the actions and `useSelectionKeys` for ⌘⌫ and Esc.
+- A list people clean up gets selection: `useSelection` over the selectable rows in the order the
+  table shows them (`useRowOrder`), `select` on the `DataTable` (with `blocked` saying why a row
+  can't be picked), and `BulkDelete`, or `SelectionBar` with `useSelectionKeys` for other actions.
+  Boxes stay hidden until a row is hovered or something is selected.
 - Times go through `lib/clock.ts` (`formatClock`, `formatPreciseClock`, `formatDateTime`), never
   `toLocaleString` or a fixed locale, so they follow the Mac's time zone and 12- or 24-hour clock,
   or UTC when Settings asks.

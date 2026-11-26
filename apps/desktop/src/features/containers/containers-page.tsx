@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { newDraft } from "@/features/compose/model";
 import { useCompose } from "@/features/compose/store";
@@ -6,18 +6,19 @@ import { usageById, useMetrics } from "@/features/metrics/api";
 import type { ContainerAction, ContainerSummary } from "@/lib/ipc/bindings";
 import { useIdSet } from "@/lib/use-id-set";
 import { useSelection, useSelectionKeys } from "@/lib/use-selection";
-import { useSlashToSearch } from "@/lib/use-slash-to-search";
 import { Crumb, Page } from "@/shell/page";
 import { Button } from "@/ui/button";
 import { EmptyState } from "@/ui/empty-state";
-import { SearchField } from "@/ui/search-field";
+import { ListSection } from "@/ui/list-section";
 import { Segmented } from "@/ui/segmented";
+import { type Column, useRowOrder } from "@/ui/table-layout";
 import { Tile } from "@/ui/tile";
 import { useContainerAction, useContainers } from "./api";
 import { BulkBar } from "./bulk-bar";
+import { CONTAINERS_TABLE, containerColumns } from "./container-columns";
 import { ContainerTable } from "./container-table";
 import { ContainersHero } from "./containers-hero";
-import { CrashBanners } from "./crash-banners";
+import { CrashNotice } from "./crash-notice";
 import { DeleteSheet } from "./delete-sheet";
 import {
   type ContainerGroup,
@@ -25,6 +26,7 @@ import {
   type Filter,
   filterOptions,
   groupByProject,
+  isCrashed,
   matches,
 } from "./model";
 import { useRunSheet } from "./run/api";
@@ -53,37 +55,6 @@ function NoContainers() {
   );
 }
 
-type ToolbarProps = {
-  containers: ContainerSummary[];
-  filter: Filter;
-  onFilter: (filter: Filter) => void;
-  query: string;
-  onQuery: (query: string) => void;
-};
-
-function Toolbar({ containers, filter, onFilter, query, onQuery }: ToolbarProps) {
-  const search = useRef<HTMLInputElement>(null);
-  useSlashToSearch(search);
-  return (
-    <div className="flex items-center gap-2 px-5 pt-1 pb-3">
-      <Segmented
-        label="Show"
-        value={filter}
-        onChange={onFilter}
-        options={filterOptions(containers)}
-      />
-      <SearchField
-        ref={search}
-        value={query}
-        onChange={onQuery}
-        placeholder="Filter containers"
-        shortcut="/"
-        className="w-[220px]"
-      />
-    </div>
-  );
-}
-
 /** Containers the list shows: Kubernetes pods live under Kubernetes instead. */
 function useListedContainers() {
   const { data } = useContainers();
@@ -93,11 +64,13 @@ function useListedContainers() {
 /** The rows in the order they show, so ⇧-click selects what lies between. */
 function useContainerSelection(
   groups: ContainerGroup[],
+  columns: Column<ContainerSummary>[],
   all: ContainerSummary[],
   onDelete: (containers: ContainerSummary[]) => void,
 ) {
+  const order = useRowOrder(CONTAINERS_TABLE, columns);
   const selection = useSelection(
-    groups.flatMap((group) => group.containers.map((container) => container.id)),
+    groups.flatMap((group) => order(group.containers).map((container) => container.id)),
   );
   const chosen = all.filter((container) => selection.has(container.id));
   useSelectionKeys(selection, () => onDelete(chosen));
@@ -106,17 +79,6 @@ function useContainerSelection(
 
 export function ContainersPage() {
   const containers = useListedContainers();
-  const { data: metrics } = useMetrics();
-  const action = useContainerAction();
-  const [filter, setFilter] = useState<Filter>("all");
-  const [query, setQuery] = useState("");
-  const [hot, setHot] = useState<string | null>(null);
-  const [removing, setRemoving] = useState<ContainerSummary[]>([]);
-  const collapsed = useIdSet();
-  const all = containers ?? [];
-  const visible = all.filter((container) => matches(container, filter, query));
-  const groups = groupByProject(visible);
-  const { selection, chosen } = useContainerSelection(groups, all, setRemoving);
   if (containers?.length === 0) {
     return (
       <Page crumbs={<Crumb>Containers</Crumb>}>
@@ -129,6 +91,32 @@ export function ContainersPage() {
       </Page>
     );
   }
+  return <ContainerList containers={containers} />;
+}
+
+/** The state filter and the search, and what they leave in view. */
+function useContainerFilter(all: ContainerSummary[]) {
+  const [chosen, setFilter] = useState<Filter>("all");
+  const [query, setQuery] = useState("");
+  // Once the last crashed container is gone, so is its filter.
+  const filter = chosen === "crashed" && !all.some(isCrashed) ? "all" : chosen;
+  const visible = all.filter((container) => matches(container, filter, query));
+  return { filter, setFilter, query, setQuery, visible };
+}
+
+/** The page once there is something to list; `undefined` while the first read is on its way. */
+function ContainerList({ containers }: { containers: ContainerSummary[] | undefined }) {
+  const { data: metrics } = useMetrics();
+  const action = useContainerAction();
+  const all = containers ?? [];
+  const { filter, setFilter, query, setQuery, visible } = useContainerFilter(all);
+  const [hot, setHot] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<ContainerSummary[]>([]);
+  const collapsed = useIdSet();
+  const groups = groupByProject(visible);
+  const usage = usageById(metrics);
+  const columns = containerColumns(usage);
+  const { selection, chosen } = useContainerSelection(groups, columns, all, setRemoving);
   const act = (targets: ContainerSummary[], verb: ContainerAction, label?: string) =>
     action.mutate({ containers: targets, action: verb, ...(label ? { label } : {}) });
   const finish = (targets: ContainerSummary[], verb: ContainerAction) => {
@@ -140,15 +128,20 @@ export function ContainersPage() {
     <Page crumbs={<Crumb>Containers</Crumb>}>
       <ContainersHero containers={containers} ledger={metrics?.ledger} hot={hot} onHot={setHot} />
       <ToolsBanner />
-      <CrashBanners containers={all} />
-      <Toolbar
-        containers={all}
-        filter={filter}
-        onFilter={setFilter}
+      <CrashNotice containers={all} onShow={() => setFilter("crashed")} />
+      <ListSection
         query={query}
         onQuery={setQuery}
-      />
-      <div className="pb-[72px]">
+        placeholder="Filter containers"
+        filter={
+          <Segmented
+            label="Show"
+            value={filter}
+            onChange={setFilter}
+            options={filterOptions(all)}
+          />
+        }
+      >
         {containers && visible.length === 0 ? (
           <EmptyState
             title={emptyTitle(filter, query)}
@@ -158,17 +151,16 @@ export function ContainersPage() {
           <ContainerTable
             groups={groups}
             members={new Map(groupByProject(all).map((group) => [group.id, group.containers]))}
-            usage={usageById(metrics)}
-            selected={new Set(selection.chosen)}
-            onSelect={selection.set}
-            onPick={selection.click}
+            columns={columns}
+            usage={usage}
+            selection={selection}
             collapsed={collapsed.ids}
             onCollapse={collapsed.toggle}
             act={act}
             remove={setRemoving}
           />
         )}
-      </div>
+      </ListSection>
       <BulkBar
         count={chosen.length}
         onAct={(verb) => finish(chosen, verb)}

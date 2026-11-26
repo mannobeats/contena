@@ -17,7 +17,7 @@ type ToastedMutation<T> = {
 export function useToastedMutation<T>({ run, done, failed, invalidates }: ToastedMutation<T>) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: run,
+    mutationFn: (input: T) => run(input),
     onSuccess: (_, input) => toast.success(done(input)),
     onError: (error) => toast.error(failed, { description: errorMessage(error) }),
     onSettled: () => client.invalidateQueries({ queryKey: invalidates }),

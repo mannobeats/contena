@@ -1,16 +1,16 @@
-import { IconDots, IconRotateClockwise, IconScale } from "@tabler/icons-react";
+import { IconRotateClockwise, IconScale } from "@tabler/icons-react";
 import clsx from "clsx";
 
 import { copyText } from "@/lib/clipboard";
 import { formatAge } from "@/lib/format";
 import type { DeploymentSummary } from "@/lib/ipc/bindings";
-import { Button } from "@/ui/button";
 import { Chip } from "@/ui/chip";
 import { rowActions } from "@/ui/classes";
-import { type Column, ColumnTable } from "@/ui/column-table";
+import { DataTable } from "@/ui/data-table";
 import { IconAction } from "@/ui/icon-action";
-import { Menu, type MenuEntry } from "@/ui/menu";
+import { type MenuEntry, MoreMenu } from "@/ui/menu";
 import { Meter } from "@/ui/progress";
+import type { Column } from "@/ui/table-layout";
 import { Tile } from "@/ui/tile";
 
 import { editYaml, useRestartDeployment } from "./api";
@@ -72,17 +72,7 @@ function Actions({ deployment, handlers }: { deployment: DeploymentSummary; hand
       >
         <IconRotateClockwise />
       </IconAction>
-      <Menu entries={deploymentMenu(deployment, handlers)} align="end">
-        <Button
-          variant="ghost"
-          size="sm"
-          iconOnly
-          aria-label={`More for ${deployment.name}`}
-          className="text-ink-3 hover:text-ink"
-        >
-          <IconDots />
-        </Button>
-      </Menu>
+      <MoreMenu entries={deploymentMenu(deployment, handlers)} target={deployment.name} />
     </span>
   );
 }
@@ -98,6 +88,7 @@ export function DeploymentsTable({
   const handlers: Handlers = { open, restart: (deployment) => restart.mutate(deployment) };
   const columns: Column<DeploymentSummary>[] = [
     {
+      id: "name",
       header: "Name",
       cell: (deployment) => (
         <span className="flex min-w-0 items-center gap-2">
@@ -107,49 +98,57 @@ export function DeploymentsTable({
       ),
     },
     {
+      id: "namespace",
       header: "Namespace",
-      width: "w-[140px]",
+      width: 140,
       cell: (deployment) => <Chip>{deployment.namespace}</Chip>,
     },
     {
+      id: "ready",
       header: "Ready",
-      width: "w-[120px]",
+      width: 120,
       cell: (deployment) => <Ready deployment={deployment} />,
     },
     {
+      id: "up-to-date",
       header: "Up to date",
-      width: "w-[88px]",
+      width: 88,
       align: "right",
       cell: (deployment) => deployment.upToDate,
     },
     {
+      id: "available",
       header: "Available",
-      width: "w-[80px]",
+      width: 80,
       align: "right",
       cell: (deployment) => deployment.available,
     },
     {
+      id: "image",
       header: "Image",
       cell: (deployment) => (
         <code className="font-mono text-mono-12 text-ink-3">{deployment.images.join(", ")}</code>
       ),
     },
     {
+      id: "age",
       header: "Age",
-      width: "w-[60px]",
+      width: 60,
       align: "right",
       cell: (deployment) => <span className="text-ink-3">{formatAge(deployment.createdAt)}</span>,
     },
     {
+      id: "actions",
       header: "Actions",
       hiddenHeader: true,
-      width: "w-[112px]",
+      width: 112,
       align: "right",
       cell: (deployment) => <Actions deployment={deployment} handlers={handlers} />,
     },
   ];
   return (
-    <ColumnTable
+    <DataTable
+      layoutKey="kube-deployments"
       label="Deployments"
       columns={columns}
       rows={deployments}

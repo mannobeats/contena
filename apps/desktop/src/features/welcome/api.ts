@@ -12,7 +12,10 @@ import {
 } from "@/lib/ipc/bindings";
 
 export function useMigrationSources() {
-  return useQuery({ queryKey: ["migration", "sources"], queryFn: commands.migrationSources });
+  return useQuery({
+    queryKey: ["migration", "sources"],
+    queryFn: () => commands.migrationSources(),
+  });
 }
 
 export function useInventory(source: MigrationSource | null) {

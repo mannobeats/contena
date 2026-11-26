@@ -1,12 +1,10 @@
-import { IconDots } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { copyText } from "@/lib/clipboard";
 import type { ContainerDetails } from "@/lib/ipc/bindings";
-import { Button } from "@/ui/button";
 import { ConfirmSheet } from "@/ui/confirm-sheet";
-import { Menu, type MenuEntry } from "@/ui/menu";
+import { type MenuEntry, MoreMenu } from "@/ui/menu";
 import { PromptSheet } from "@/ui/prompt-sheet";
 
 import { useContainerAction, useRecreate } from "../api";
@@ -64,11 +62,7 @@ export function DetailMenu({ details }: { details: ContainerDetails }) {
   const close = (open: boolean) => (open ? undefined : setDialog(null));
   return (
     <>
-      <Menu entries={entries} align="end">
-        <Button iconOnly aria-label={`More for ${details.name}`}>
-          <IconDots />
-        </Button>
-      </Menu>
+      <MoreMenu entries={entries} target={details.name} place="toolbar" />
       <PromptSheet
         open={dialog === "rename"}
         onOpenChange={close}

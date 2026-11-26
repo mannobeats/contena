@@ -1,4 +1,4 @@
-import { IconCamera, IconDots } from "@tabler/icons-react";
+import { IconCamera } from "@tabler/icons-react";
 import { useState } from "react";
 
 import { formatDateTime } from "@/lib/clock";
@@ -8,7 +8,7 @@ import { errorMessage } from "@/lib/ipc/errors";
 import { Button } from "@/ui/button";
 import { ConfirmSheet } from "@/ui/confirm-sheet";
 import { EmptyState } from "@/ui/empty-state";
-import { ContextMenu, Menu, type MenuEntry } from "@/ui/menu";
+import { ContextMenu, type MenuEntry, MoreMenu } from "@/ui/menu";
 
 import { useDeleteSnapshot, useMachineSnapshots, useRestoreSnapshot } from "./api";
 
@@ -42,11 +42,7 @@ function Row({
         >
           {Number.isNaN(created) ? "" : formatRelative(created / 1000)}
         </time>
-        <Menu entries={menu} align="end">
-          <Button variant="ghost" size="sm" iconOnly aria-label={`More for ${snapshot.name}`}>
-            <IconDots />
-          </Button>
-        </Menu>
+        <MoreMenu entries={menu} target={snapshot.name} />
       </li>
     </ContextMenu>
   );

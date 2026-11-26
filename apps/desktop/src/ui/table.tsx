@@ -5,31 +5,7 @@ import type { Selection } from "@/lib/use-selection";
 
 import { Checkbox } from "./checkbox";
 import { rowActions } from "./classes";
-import { openRowOnClick } from "./row-click";
 import { Tip } from "./tooltip";
-
-/** A full-width list table: hairline rows, sticky header, 20px outer padding. */
-export function Table({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <table
-      ref={openRowOnClick}
-      aria-label={label}
-      className="w-full table-fixed border-separate border-spacing-0 text-13 [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:first-child]:pl-5 [&_th:last-child]:pr-5"
-    >
-      {children}
-    </table>
-  );
-}
-
-export function HeadRow({ children }: { children: ReactNode }) {
-  return (
-    <thead>
-      <tr className="[&>th]:sticky [&>th]:top-0 [&>th]:z-[2] [&>th]:h-[30px] [&>th]:border-b-[0.5px] [&>th]:border-line [&>th]:bg-bg [&>th]:px-2.5 [&>th]:text-left [&>th]:text-12 [&>th]:font-medium [&>th]:whitespace-nowrap [&>th]:text-ink-3">
-        {children}
-      </tr>
-    </thead>
-  );
-}
 
 /** Other props reach the `<tr>`, so a `ContextMenu` around the row can open on right-click. */
 type RowProps = ComponentProps<"tr"> & { dim?: boolean; selected?: boolean };
@@ -61,11 +37,20 @@ export function RowActions({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Boxes stay out of sight until they can be used, as in Mail: on the hovered row, while the
+ * keyboard is on one, or once anything is selected.
+ */
+const reveal =
+  "inline-flex align-middle opacity-0 transition-opacity duration-140 group-hover/row:opacity-100 group-hover/head:opacity-100 group-aria-selected/row:opacity-100 group-data-selecting/table:opacity-100 has-focus-visible:opacity-100";
+
 /** The header's box: selects every row that can be selected, or none. */
 export function SelectAll({ selection, label }: { selection: Selection; label: string }) {
   return (
     <th className="w-11">
-      <Checkbox checked={selection.all} onCheckedChange={selection.setAll} label={label} />
+      <span className={reveal}>
+        <Checkbox checked={selection.all} onCheckedChange={selection.setAll} label={label} />
+      </span>
     </th>
   );
 }
@@ -84,7 +69,7 @@ export function SelectCell({ selection, id, label, blocked }: SelectCellProps) {
     return (
       <td className="w-11">
         <Tip label={blocked}>
-          <span className="inline-flex">
+          <span className={reveal}>
             <Checkbox checked={false} onCheckedChange={() => undefined} label={label} disabled />
           </span>
         </Tip>
@@ -93,11 +78,13 @@ export function SelectCell({ selection, id, label, blocked }: SelectCellProps) {
   }
   return (
     <td className="w-11">
-      <Checkbox
-        checked={selection.has(id)}
-        onCheckedChange={() => selection.toggle(id)}
-        label={label}
-      />
+      <span className={reveal}>
+        <Checkbox
+          checked={selection.has(id)}
+          onCheckedChange={() => selection.toggle(id)}
+          label={label}
+        />
+      </span>
     </td>
   );
 }

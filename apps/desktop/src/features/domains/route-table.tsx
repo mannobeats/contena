@@ -1,9 +1,16 @@
+import { IconCopy, IconExternalLink } from "@tabler/icons-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
+
+import { copyText } from "@/lib/clipboard";
 import type { DomainRoute, DomainsStatus } from "@/lib/ipc/bindings";
 import { CxIcon } from "@/ui/cx-icon";
+import { DataTable } from "@/ui/data-table";
 import { EmptyState } from "@/ui/empty-state";
+import { IconAction } from "@/ui/icon-action";
+import { type MenuEntry, MoreMenu } from "@/ui/menu";
 
-import { DomainRow } from "./domain-row";
 import { groupRoutes, routeUrl } from "./model";
+import { routeColumns } from "./route-columns";
 
 const GROUP_ICONS = { custom: "domain", container: "container", service: "kube" } as const;
 
@@ -12,9 +19,6 @@ type RouteTableProps = {
   onEdit: (route: DomainRoute) => void;
   onRemove: (route: DomainRoute) => void;
 };
-
-const headClass =
-  "[&>th]:h-[30px] [&>th]:border-b-[0.5px] [&>th]:border-line [&>th]:bg-bg [&>th]:px-2.5 [&>th]:text-left [&>th]:text-12 [&>th]:font-medium [&>th]:text-ink-3";
 
 export function RouteTable({ status, onEdit, onRemove }: RouteTableProps) {
   const groups = groupRoutes(status.routes);
@@ -25,30 +29,54 @@ export function RouteTable({ status, onEdit, onRemove }: RouteTableProps) {
       </EmptyState>
     );
   }
+  const url = (route: DomainRoute) => routeUrl(route, status.ports);
+  const open = (route: DomainRoute) => openUrl(url(route)).catch(() => undefined);
+  const copyUrl = (route: DomainRoute) => copyText("URL", url(route));
+  const menu = (route: DomainRoute): MenuEntry[] => [
+    { label: "Open in Browser", onSelect: () => open(route), disabled: route.down !== null },
+    { kind: "separator" },
+    { label: "Copy URL", onSelect: () => copyUrl(route) },
+    { label: "Copy curl Command", onSelect: () => copyText("Command", `curl -sS ${url(route)}`) },
+    ...(route.kind === "custom"
+      ? [
+          { kind: "separator" as const },
+          { label: "Edit Route…", onSelect: () => onEdit(route) },
+          { kind: "separator" as const },
+          { label: "Remove Route…", danger: true, onSelect: () => onRemove(route) },
+        ]
+      : []),
+  ];
   return (
-    <table className="w-full table-fixed border-separate border-spacing-0 text-13">
-      <colgroup>
-        <col />
-        <col className="w-[28%]" />
-        <col className="w-[120px]" />
-        <col className="w-[150px]" />
-        <col className="w-[104px]" />
-      </colgroup>
-      <thead>
-        <tr className={headClass}>
-          <th className="pl-5!">Domain</th>
-          <th>Points to</th>
-          <th>HTTPS</th>
-          <th>Status</th>
-          <th>
-            <span className="sr-only">Actions</span>
-          </th>
-        </tr>
-      </thead>
-      {groups.map((group) => (
-        <tbody key={group.kind}>
+    <DataTable
+      layoutKey="domains"
+      label="Domains"
+      columns={routeColumns(status.caTrusted)}
+      rowKey={(route) => route.host}
+      muted={(route) => route.down !== null}
+      menu={menu}
+      actionsWidth={104}
+      actions={(route) => (
+        <>
+          <IconAction
+            label="Open in browser"
+            target={route.host}
+            disabled={route.down !== null}
+            onClick={() => open(route)}
+          >
+            <IconExternalLink />
+          </IconAction>
+          <IconAction label="Copy URL" target={route.host} onClick={() => copyUrl(route)}>
+            <IconCopy />
+          </IconAction>
+          <MoreMenu entries={menu(route)} target={route.host} />
+        </>
+      )}
+      groups={groups.map((group) => ({
+        id: group.kind,
+        rows: group.routes,
+        head: ({ span }) => (
           <tr className="h-[34px] [&>td]:border-b-[0.5px] [&>td]:border-line">
-            <td colSpan={5} className="pt-2.5 pl-5 text-12 font-semibold text-ink-2">
+            <td colSpan={span} className="pt-2.5 text-12 font-semibold text-ink-2">
               <span className="flex items-center gap-2">
                 <CxIcon name={GROUP_ICONS[group.kind]} className="size-3.5 text-ink-3" />
                 {group.label}
@@ -56,18 +84,8 @@ export function RouteTable({ status, onEdit, onRemove }: RouteTableProps) {
               </span>
             </td>
           </tr>
-          {group.routes.map((route) => (
-            <DomainRow
-              key={route.host}
-              route={route}
-              url={routeUrl(route, status.ports)}
-              caTrusted={status.caTrusted}
-              onEdit={() => onEdit(route)}
-              onRemove={() => onRemove(route)}
-            />
-          ))}
-        </tbody>
-      ))}
-    </table>
+        ),
+      }))}
+    />
   );
 }

@@ -11,7 +11,7 @@ export const engineShell = commands.engineShell;
 export function useEngineStatus() {
   return useQuery({
     queryKey: queryKeys.engine,
-    queryFn: commands.engineStatus,
+    queryFn: () => commands.engineStatus(),
     refetchInterval: 15_000,
   });
 }

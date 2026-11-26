@@ -1,4 +1,4 @@
-import { IconAlertCircle, IconDots } from "@tabler/icons-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { getRouteApi, Link, useNavigate } from "@tanstack/react-router";
 
 import { formatRelative } from "@/lib/format";
@@ -8,11 +8,10 @@ import { useNow } from "@/lib/use-now";
 import { Crumb, Page } from "@/shell/page";
 import { ParentCrumb } from "@/shell/parent-crumb";
 import { Banner } from "@/ui/banner";
-import { Button } from "@/ui/button";
 import { buttonClass } from "@/ui/button-class";
 import { EmptyState } from "@/ui/empty-state";
 import { LogView } from "@/ui/log-view";
-import { Menu } from "@/ui/menu";
+import { MoreMenu } from "@/ui/menu";
 import { Progress, Skeleton } from "@/ui/progress";
 import { ResourceHeader } from "@/ui/resource-header";
 import { TabPanel, Tabs } from "@/ui/tabs";
@@ -82,13 +81,7 @@ function Header({ build }: { build: BuildRecord }) {
             {cachedLabel(build) ? <span>{cachedLabel(build)}</span> : null}
           </>
         }
-        actions={
-          <Menu entries={menu} align="end">
-            <Button iconOnly aria-label={`More for ${name}`}>
-              <IconDots />
-            </Button>
-          </Menu>
-        }
+        actions={<MoreMenu entries={menu} target={name} place="toolbar" />}
       />
       {running ? (
         <Progress value={buildProgress(build)} label={`${name} progress`} className="mx-5 mb-3" />

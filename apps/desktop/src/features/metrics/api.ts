@@ -12,7 +12,7 @@ export function useMetrics() {
   );
   return useQuery({
     queryKey: queryKeys.metrics,
-    queryFn: commands.metricsLatest,
+    queryFn: () => commands.metricsLatest(),
     staleTime: Number.POSITIVE_INFINITY,
   });
 }

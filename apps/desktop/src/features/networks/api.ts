@@ -10,7 +10,7 @@ export function useNetworks() {
   const { data: engine } = useEngineStatus();
   return useQuery({
     queryKey: queryKeys.networks,
-    queryFn: commands.networksList,
+    queryFn: () => commands.networksList(),
     enabled: isServing(engine?.phase),
   });
 }

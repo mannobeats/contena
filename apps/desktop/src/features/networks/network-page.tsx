@@ -11,14 +11,16 @@ import { ParentCrumb } from "@/shell/parent-crumb";
 import { Button } from "@/ui/button";
 import { rowLink } from "@/ui/classes";
 import { Dash } from "@/ui/dash";
+import { DataTable } from "@/ui/data-table";
 import { EmptyState } from "@/ui/empty-state";
 import { IconAction } from "@/ui/icon-action";
 import { Kv } from "@/ui/kv";
-import { ContextMenu, type MenuEntry } from "@/ui/menu";
+import type { MenuEntry } from "@/ui/menu";
 import { ResourceHeader } from "@/ui/resource-header";
-import { HeadRow, Row, RowActions, Table } from "@/ui/table";
+import type { Column } from "@/ui/table-layout";
 import { Tile } from "@/ui/tile";
 import { Tip } from "@/ui/tooltip";
+import { Truncate } from "@/ui/truncate";
 
 import { useDisconnectNetwork, useNetwork } from "./api";
 import { ConnectSheet } from "./connect-sheet";
@@ -26,6 +28,42 @@ import { DeleteNetworkSheet } from "./delete-network-sheet";
 import { hostAddress, undeletable } from "./model";
 
 const route = getRouteApi("/networks/$id");
+
+const endpointColumns: Column<NetworkEndpoint>[] = [
+  {
+    id: "container",
+    header: "Container",
+    minWidth: 180,
+    sortValue: (endpoint) => endpoint.container,
+    cell: (endpoint) => (
+      <Link
+        to="/containers/$id"
+        params={{ id: endpoint.containerId }}
+        className={rowLink}
+        data-row-link
+      >
+        <Tile />
+        <Truncate text={endpoint.container} className="text-ink" />
+      </Link>
+    ),
+  },
+  {
+    id: "ipv4",
+    header: "IPv4",
+    width: 150,
+    sortValue: (endpoint) => endpoint.ipv4,
+    className: "font-mono text-mono-12",
+    cell: (endpoint) => endpoint.ipv4 ?? <Dash />,
+  },
+  {
+    id: "mac",
+    header: "MAC",
+    width: 160,
+    optional: true,
+    className: "font-mono text-mono-12 text-ink-3",
+    cell: (endpoint) => endpoint.mac ?? <Dash />,
+  },
+];
 
 function Endpoints({ detail }: { detail: NetworkDetail }) {
   const navigate = useNavigate();
@@ -63,52 +101,20 @@ function Endpoints({ detail }: { detail: NetworkDetail }) {
     );
   }
   return (
-    <Table label="Connected containers">
-      <colgroup>
-        <col />
-        <col className="w-[150px]" />
-        <col className="w-[160px]" />
-        <col className="w-[60px]" />
-      </colgroup>
-      <HeadRow>
-        <th>Container</th>
-        <th>IPv4</th>
-        <th>MAC</th>
-        <th>
-          <span className="sr-only">Actions</span>
-        </th>
-      </HeadRow>
-      <tbody>
-        {detail.endpoints.map((endpoint) => (
-          <ContextMenu key={endpoint.containerId} entries={menu(endpoint)}>
-            <Row>
-              <td className="max-w-0">
-                <Link
-                  to="/containers/$id"
-                  params={{ id: endpoint.containerId }}
-                  className={rowLink}
-                  data-row-link
-                >
-                  <Tile />
-                  <span className="truncate text-ink">{endpoint.container}</span>
-                </Link>
-              </td>
-              <td className="font-mono text-mono-12">{endpoint.ipv4 ?? <Dash />}</td>
-              <td className="font-mono text-mono-12 text-ink-3">{endpoint.mac ?? <Dash />}</td>
-              <RowActions>
-                <IconAction
-                  label="Disconnect"
-                  target={endpoint.container}
-                  onClick={() => leave(endpoint)}
-                >
-                  <IconPlugConnectedX />
-                </IconAction>
-              </RowActions>
-            </Row>
-          </ContextMenu>
-        ))}
-      </tbody>
-    </Table>
+    <DataTable
+      layoutKey="network-endpoints"
+      label="Connected containers"
+      columns={endpointColumns}
+      rows={detail.endpoints}
+      rowKey={(endpoint) => endpoint.containerId}
+      menu={menu}
+      actionsWidth={52}
+      actions={(endpoint) => (
+        <IconAction label="Disconnect" target={endpoint.container} onClick={() => leave(endpoint)}>
+          <IconPlugConnectedX />
+        </IconAction>
+      )}
+    />
   );
 }
 

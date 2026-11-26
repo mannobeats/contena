@@ -61,11 +61,17 @@ describe("ContainersPage", () => {
 
   it("answers what runs and where the memory goes, and hides Kubernetes pods", async () => {
     setup();
-    expect(await screen.findByText("shop-db-1")).toBeDefined();
+    expect(await screen.findByText("db-1")).toBeDefined();
     expect(screen.getByText(/containers running/).textContent).toContain("2 of 3");
     expect(screen.getByText(/uses the most/).textContent).toContain("shop");
     expect(screen.queryByText("k8s_web")).toBeNull();
-    expect(screen.getByText("64 MB", { selector: "td" })).toBeDefined();
+    const db = screen.getByRole("row", { name: /db-1/ });
+    expect(within(db).getByText("64 MB", { selector: "td" })).toBeDefined();
+    const project = screen.getByRole("button", { name: "Collapse shop" }).closest("tr");
+    if (!project) {
+      throw new Error("The shop project has no header row");
+    }
+    expect(within(project).getByText("64 MB", { selector: "td" })).toBeDefined();
   });
 
   it("flags a crashed container with a banner", async () => {
@@ -109,13 +115,13 @@ describe("ContainersPage", () => {
 
   it("filters by search and by state", async () => {
     setup();
-    await screen.findByText("shop-db-1");
+    await screen.findByText("db-1");
     await userEvent.type(screen.getByPlaceholderText("Filter containers"), "api");
-    expect(screen.queryByText("shop-db-1")).toBeNull();
-    expect(screen.getByText("shop-api-1")).toBeDefined();
+    expect(screen.queryByText("db-1")).toBeNull();
+    expect(screen.getByText("api-1")).toBeDefined();
     await userEvent.clear(screen.getByPlaceholderText("Filter containers"));
     await userEvent.click(screen.getByRole("radio", { name: /Stopped/ }));
-    expect(screen.queryByText("shop-api-1")).toBeNull();
+    expect(screen.queryByText("api-1")).toBeNull();
     expect(screen.getByText("payments-mock", { selector: "span" })).toBeDefined();
   });
 
@@ -177,7 +183,7 @@ describe("ContainersPage", () => {
   it("stops the whole project while a search hides some of it", async () => {
     const calls = setup();
     await userEvent.type(await screen.findByPlaceholderText("Filter containers"), "api");
-    expect(screen.getByText("2 of 2 running")).toBeDefined();
+    expect(screen.getByText("2 running")).toBeDefined();
     fireEvent.contextMenu(screen.getByRole("button", { name: "Collapse shop" }));
     await userEvent.click(await screen.findByRole("menuitem", { name: "Stop Project" }));
     await waitFor(() => {

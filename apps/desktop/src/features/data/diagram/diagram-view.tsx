@@ -15,7 +15,6 @@ import {
 } from "@xyflow/react";
 
 import type { Namespace, ServerInfo, Table } from "@/lib/ipc/bindings";
-import { useIsDark } from "@/lib/theme";
 import { EmptyState } from "@/ui/empty-state";
 
 import { compactCount, tableKey } from "../model";
@@ -68,7 +67,6 @@ const NODE_TYPES = { table: TableCard };
 
 /** Every table and its foreign keys, laid out by ELK; double-click a table to open its rows. */
 export function DiagramView({ info, namespaces }: { info: ServerInfo; namespaces: Namespace[] }) {
-  const dark = useIsDark();
   const open = useOpenTab(info.id);
   const tables = diagramTables(namespaces);
   const positions = useQuery({
@@ -102,7 +100,6 @@ export function DiagramView({ info, namespaces }: { info: ServerInfo; namespaces
           defaultNodes={nodes}
           defaultEdges={edges}
           nodeTypes={NODE_TYPES}
-          colorMode={dark ? "dark" : "light"}
           fitView
           minZoom={0.2}
           proOptions={{ hideAttribution: true }}

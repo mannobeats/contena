@@ -17,7 +17,7 @@ export function useImages() {
   const { data: engine } = useEngineStatus();
   return useQuery({
     queryKey: queryKeys.images,
-    queryFn: commands.imagesList,
+    queryFn: () => commands.imagesList(),
     enabled: isServing(engine?.phase),
   });
 }

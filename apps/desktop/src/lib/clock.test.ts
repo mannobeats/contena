@@ -6,8 +6,8 @@ const evening = Date.parse("2026-10-18T02:54:07.123Z");
 
 // A Mac in a zone other than UTC, so following the Mac and following UTC read differently.
 beforeAll(() => vi.stubEnv("TZ", "America/Los_Angeles"));
-afterAll(() => vi.unstubAllEnvs());
 beforeEach(() => useClock.setState({ timeZone: "UTC", hour12: true }));
+afterAll(() => vi.unstubAllEnvs());
 
 describe("clock", () => {
   it("follows the Mac's 12- or 24-hour clock", () => {

@@ -38,8 +38,7 @@ export function Tile({
         "grid shrink-0 place-items-center overflow-hidden bg-[light-dark(oklch(1_0_0),oklch(0.3_0.006_255))] text-ink-2 shadow-[inset_0_0_0_0.5px_light-dark(oklch(0_0_0/0.12),oklch(1_0_0/0.1)),0_1px_1.5px_light-dark(oklch(0_0_0/0.06),oklch(0_0_0/0.3))] transition-[filter,opacity] duration-220",
         sizes[size],
         state === "off" && "opacity-50 grayscale",
-        state === "bad" &&
-          "shadow-[inset_0_0_0_1.5px_var(--bad),0_0_0_3px_light-dark(oklch(0.6_0.2_27/0.14),oklch(0.6_0.2_27/0.22))]",
+        state === "bad" && "opacity-70 grayscale shadow-[inset_0_0_0_1px_var(--bad)]",
         className,
       )}
     >

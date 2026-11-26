@@ -4,9 +4,10 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { copyText } from "@/lib/clipboard";
 import type { IngressSummary, ServiceSummary } from "@/lib/ipc/bindings";
 import { Chip } from "@/ui/chip";
-import { type Column, ColumnTable } from "@/ui/column-table";
 import { Dash } from "@/ui/dash";
+import { DataTable } from "@/ui/data-table";
 import type { MenuEntry } from "@/ui/menu";
+import type { Column } from "@/ui/table-layout";
 import { Tile } from "@/ui/tile";
 
 const open = (url: string) => () => {
@@ -55,16 +56,18 @@ function FromMac({ service }: { service: ServiceSummary }) {
 
 export function ServicesTable({ services }: { services: ServiceSummary[] }) {
   const columns: Column<ServiceSummary>[] = [
-    { header: "Name", cell: (service) => <Name name={service.name} /> },
+    { id: "name", header: "Name", cell: (service) => <Name name={service.name} /> },
     {
+      id: "namespace",
       header: "Namespace",
-      width: "w-[140px]",
+      width: 140,
       cell: (service) => <Chip>{service.namespace}</Chip>,
     },
-    { header: "Type", width: "w-[110px]", cell: (service) => service.kind },
+    { id: "type", header: "Type", width: 110, cell: (service) => service.kind },
     {
+      id: "cluster-ip",
       header: "Cluster IP",
-      width: "w-[120px]",
+      width: 120,
       cell: (service) =>
         service.clusterIp ? (
           <code className="font-mono text-mono-12">{service.clusterIp}</code>
@@ -73,8 +76,9 @@ export function ServicesTable({ services }: { services: ServiceSummary[] }) {
         ),
     },
     {
+      id: "ports",
       header: "Ports",
-      width: "w-[150px]",
+      width: 150,
       cell: (service) => (
         <code className="font-mono text-mono-12 text-ink-3">
           {service.ports
@@ -86,10 +90,15 @@ export function ServicesTable({ services }: { services: ServiceSummary[] }) {
         </code>
       ),
     },
-    { header: "From your Mac", cell: (service) => <FromMac service={service} /> },
+    {
+      id: "from-your-mac",
+      header: "From your Mac",
+      cell: (service) => <FromMac service={service} />,
+    },
   ];
   return (
-    <ColumnTable
+    <DataTable
+      layoutKey="kube-services"
       label="Services"
       columns={columns}
       rows={services}
@@ -118,13 +127,15 @@ export function IngressTable({ ingresses }: { ingresses: IngressSummary[] }) {
     ingress.routes.map((route) => ({ ...route, ingress })),
   );
   const columns: Column<Route>[] = [
-    { header: "Name", cell: (route) => <Name name={route.ingress.name} /> },
+    { id: "name", header: "Name", cell: (route) => <Name name={route.ingress.name} /> },
     {
+      id: "namespace",
       header: "Namespace",
-      width: "w-[140px]",
+      width: 140,
       cell: (route) => <Chip>{route.ingress.namespace}</Chip>,
     },
     {
+      id: "host",
       header: "Host",
       cell: (route) => (
         <button type="button" className={linkClass} onClick={open(routeUrl(route))}>
@@ -133,17 +144,20 @@ export function IngressTable({ ingresses }: { ingresses: IngressSummary[] }) {
       ),
     },
     {
+      id: "path",
       header: "Path",
-      width: "w-[110px]",
+      width: 110,
       cell: (route) => <code className="font-mono text-mono-12">{route.path}</code>,
     },
     {
+      id: "backend",
       header: "Backend",
       cell: (route) => <code className="font-mono text-mono-12 text-ink-3">{route.backend}</code>,
     },
     {
+      id: "tls",
       header: "TLS",
-      width: "w-[80px]",
+      width: 80,
       cell: (route) =>
         route.ingress.tls ? (
           <span className="inline-flex items-center gap-1">
@@ -156,7 +170,8 @@ export function IngressTable({ ingresses }: { ingresses: IngressSummary[] }) {
     },
   ];
   return (
-    <ColumnTable
+    <DataTable
+      layoutKey="kube-ingress"
       label="Ingress"
       columns={columns}
       rows={routes}

@@ -1,10 +1,4 @@
-import {
-  IconDots,
-  IconFolder,
-  IconPlayerPlay,
-  IconPlayerStop,
-  IconTerminal2,
-} from "@tabler/icons-react";
+import { IconFolder, IconPlayerPlay, IconPlayerStop, IconTerminal2 } from "@tabler/icons-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
 
@@ -12,7 +6,7 @@ import { formatMemory, formatPercent } from "@/lib/format";
 import type { MachineAction } from "@/lib/ipc/bindings";
 import { logoFor } from "@/lib/logos";
 import { Button } from "@/ui/button";
-import { ContextMenu, Menu } from "@/ui/menu";
+import { ContextMenu, MoreMenu } from "@/ui/menu";
 import { Tile } from "@/ui/tile";
 
 import { type MachineDialog, machineMenu } from "./machine-menu";
@@ -83,17 +77,7 @@ export function MachineCard({ machine, act, onDialog }: MachineCardProps) {
               {machine.distro} {machine.release}
             </span>
           </Link>
-          <Menu entries={menu} align="end">
-            <Button
-              variant="ghost"
-              size="sm"
-              iconOnly
-              aria-label={`More for ${machine.name}`}
-              className="relative z-[1] text-ink-3"
-            >
-              <IconDots />
-            </Button>
-          </Menu>
+          <MoreMenu entries={menu} target={machine.name} className="relative z-[1]" />
         </div>
         <Details machine={machine} />
         <div className="relative z-[1] mt-auto flex items-center gap-2">

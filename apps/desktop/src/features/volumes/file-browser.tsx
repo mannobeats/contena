@@ -7,11 +7,13 @@ import type { VolumeFile } from "@/lib/ipc/bindings";
 import { errorMessage } from "@/lib/ipc/errors";
 import { Banner } from "@/ui/banner";
 import { Dash } from "@/ui/dash";
+import { DataTable } from "@/ui/data-table";
 import { EmptyState } from "@/ui/empty-state";
 import { IconAction } from "@/ui/icon-action";
-import { ContextMenu, type MenuEntry } from "@/ui/menu";
+import { ContextMenu } from "@/ui/menu";
 import { Skeleton } from "@/ui/progress";
-import { HeadRow, Row, RowActions, Table } from "@/ui/table";
+import type { Column } from "@/ui/table-layout";
+import { Truncate } from "@/ui/truncate";
 
 import { useDownloadFromVolume, useVolumeFiles } from "./api";
 import { isFolder, joinPath } from "./model";
@@ -56,58 +58,58 @@ function Breadcrumbs({
   );
 }
 
-function EntryRow({
-  entry,
-  path,
-  onOpen,
-  onDownload,
-}: {
-  entry: VolumeFile;
-  path: string;
-  onOpen: () => void;
-  onDownload: () => void;
-}) {
+function EntryName({ entry, onOpen }: { entry: VolumeFile; onOpen: () => void }) {
   const Icon = icons[entry.kind];
-  const menu: MenuEntry[] = [
-    ...(isFolder(entry) ? [{ label: "Open", onSelect: onOpen }] : []),
-    { label: "Download…", onSelect: onDownload },
-    { kind: "separator" },
-    { label: "Copy Path", onSelect: () => copyText("Path", `/${path}`) },
-    { label: "Copy Name", onSelect: () => copyText("Name", entry.name) },
-  ];
+  if (!isFolder(entry)) {
+    return (
+      <span className="flex min-w-0 items-center gap-2 text-ink">
+        <Icon className="text-ink-3" aria-hidden />
+        <Truncate text={entry.name} className="select-text" />
+      </span>
+    );
+  }
   return (
-    <ContextMenu entries={menu}>
-      <Row>
-        <td className="max-w-0">
-          {isFolder(entry) ? (
-            <button
-              type="button"
-              onClick={onOpen}
-              className="flex min-w-0 items-center gap-2 text-ink"
-              data-row-link
-            >
-              <Icon className="text-ink-3" aria-hidden />
-              <span className="truncate">{entry.name}</span>
-            </button>
-          ) : (
-            <span className="flex min-w-0 items-center gap-2 text-ink">
-              <Icon className="text-ink-3" aria-hidden />
-              <span className="truncate select-text">{entry.name}</span>
-            </span>
-          )}
-        </td>
-        <td className="text-right tabular">
-          {isFolder(entry) ? <Dash /> : formatBytes(entry.sizeBytes)}
-        </td>
-        <td className="text-ink-3">{formatRelative(entry.modifiedAt)}</td>
-        <RowActions>
-          <IconAction label="Save to the Mac" target={entry.name} onClick={onDownload}>
-            <IconDownload />
-          </IconAction>
-        </RowActions>
-      </Row>
-    </ContextMenu>
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex min-w-0 items-center gap-2 text-ink"
+      data-row-link
+    >
+      <Icon className="text-ink-3" aria-hidden />
+      <Truncate text={entry.name} />
+    </button>
   );
+}
+
+/** Folders first, as Finder lists them, then by name. */
+const folderFirst = (entry: VolumeFile) => `${isFolder(entry) ? 0 : 1}${entry.name}`;
+
+function fileColumns(open: (entry: VolumeFile) => void): Column<VolumeFile>[] {
+  return [
+    {
+      id: "name",
+      header: "Name",
+      minWidth: 200,
+      sortValue: folderFirst,
+      cell: (entry) => <EntryName entry={entry} onOpen={() => open(entry)} />,
+    },
+    {
+      id: "size",
+      header: "Size",
+      width: 100,
+      align: "right",
+      sortValue: (entry) => (isFolder(entry) ? null : entry.sizeBytes),
+      cell: (entry) => (isFolder(entry) ? <Dash /> : formatBytes(entry.sizeBytes)),
+    },
+    {
+      id: "modified",
+      header: "Modified",
+      width: 140,
+      sortValue: (entry) => entry.modifiedAt,
+      className: "text-ink-3",
+      cell: (entry) => formatRelative(entry.modifiedAt),
+    },
+  ];
 }
 
 /** Browses a volume read-only and copies files out to the Mac. */
@@ -115,6 +117,8 @@ export function FileBrowser({ volume }: { volume: string }) {
   const [path, setPath] = useState("");
   const { data: entries, error, isPending, refetch } = useVolumeFiles(volume, path);
   const download = useDownloadFromVolume();
+  const save = (entry: VolumeFile) =>
+    download.run({ name: volume, path: joinPath(path, entry.name) });
   return (
     <div className="flex min-h-0 flex-1 flex-col border-t-[0.5px] border-line">
       <Breadcrumbs volume={volume} path={path} onOpen={setPath} />
@@ -130,35 +134,31 @@ export function FileBrowser({ volume }: { volume: string }) {
             <EmptyState title="This folder is empty" className="py-10" />
           ) : null}
           {entries && entries.length > 0 ? (
-            <Table label={`Files in ${path || volume}`}>
-              <colgroup>
-                <col />
-                <col className="w-[100px]" />
-                <col className="w-[140px]" />
-                <col className="w-[60px]" />
-              </colgroup>
-              <HeadRow>
-                <th>Name</th>
-                <th className="text-right!">Size</th>
-                <th>Modified</th>
-                <th>
-                  <span className="sr-only">Actions</span>
-                </th>
-              </HeadRow>
-              <tbody>
-                {entries.map((entry) => (
-                  <EntryRow
-                    key={entry.name}
-                    entry={entry}
-                    path={joinPath(path, entry.name)}
-                    onOpen={() => setPath(joinPath(path, entry.name))}
-                    onDownload={() =>
-                      download.run({ name: volume, path: joinPath(path, entry.name) })
-                    }
-                  />
-                ))}
-              </tbody>
-            </Table>
+            <DataTable
+              layoutKey="volume-files"
+              label={`Files in ${path || volume}`}
+              columns={fileColumns((entry) => setPath(joinPath(path, entry.name)))}
+              rows={entries}
+              rowKey={(entry) => entry.name}
+              menu={(entry) => [
+                ...(isFolder(entry)
+                  ? [{ label: "Open", onSelect: () => setPath(joinPath(path, entry.name)) }]
+                  : []),
+                { label: "Download…", onSelect: () => save(entry) },
+                { kind: "separator" },
+                {
+                  label: "Copy Path",
+                  onSelect: () => copyText("Path", `/${joinPath(path, entry.name)}`),
+                },
+                { label: "Copy Name", onSelect: () => copyText("Name", entry.name) },
+              ]}
+              actionsWidth={52}
+              actions={(entry) => (
+                <IconAction label="Save to the Mac" target={entry.name} onClick={() => save(entry)}>
+                  <IconDownload />
+                </IconAction>
+              )}
+            />
           ) : null}
         </div>
       </ContextMenu>

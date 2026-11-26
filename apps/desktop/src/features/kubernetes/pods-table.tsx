@@ -1,4 +1,4 @@
-import { IconAlertTriangle, IconDots, IconLogs } from "@tabler/icons-react";
+import { IconLogs } from "@tabler/icons-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import clsx from "clsx";
 
@@ -6,13 +6,14 @@ import { useContainers } from "@/features/containers/api";
 import { useMetrics } from "@/features/metrics/api";
 import { formatAge, formatMemory } from "@/lib/format";
 import type { PodSummary } from "@/lib/ipc/bindings";
-import { Button } from "@/ui/button";
 import { Chip } from "@/ui/chip";
 import { rowActions } from "@/ui/classes";
-import { type Column, ColumnTable } from "@/ui/column-table";
 import { Dash } from "@/ui/dash";
+import { DataTable } from "@/ui/data-table";
 import { IconAction } from "@/ui/icon-action";
-import { Menu, type MenuEntry } from "@/ui/menu";
+import { type MenuEntry, MoreMenu } from "@/ui/menu";
+import { StatusLabel } from "@/ui/status-label";
+import type { Column } from "@/ui/table-layout";
 import { Tile } from "@/ui/tile";
 
 import type { KubeSheet } from "./kube-sheet";
@@ -35,14 +36,12 @@ function PodName({ pod }: { pod: PodSummary }) {
 }
 
 function PodStatus({ pod }: { pod: PodSummary }) {
-  if (!pod.problem) {
-    return <span className={clsx(pod.status !== "Running" && "text-ink-3")}>{pod.status}</span>;
+  if (pod.problem) {
+    return <StatusLabel tone="bad" label={pod.problem} />;
   }
+  const tone = { Running: "running", Pending: "busy", Completed: "done" } as const;
   return (
-    <span className="inline-flex items-center gap-1 text-bad-ink">
-      <IconAlertTriangle className="size-3.5" aria-hidden />
-      {pod.problem}
-    </span>
+    <StatusLabel tone={tone[pod.status as keyof typeof tone] ?? "stopped"} label={pod.status} />
   );
 }
 
@@ -52,17 +51,7 @@ function PodActions({ pod, menu, logs }: { pod: PodSummary; menu: MenuEntry[]; l
       <IconAction label="Logs" target={pod.name} onClick={logs}>
         <IconLogs />
       </IconAction>
-      <Menu entries={menu} align="end">
-        <Button
-          variant="ghost"
-          size="sm"
-          iconOnly
-          aria-label={`More for ${pod.name}`}
-          className="text-ink-3 hover:text-ink"
-        >
-          <IconDots />
-        </Button>
-      </Menu>
+      <MoreMenu entries={menu} target={pod.name} />
     </span>
   );
 }
@@ -87,39 +76,63 @@ function rowMenu(pod: PodSummary, show: Show, open: Open): MenuEntry[] {
 function columns(memory: Map<string, number>, show: Show, open: Open): Column<PodSummary>[] {
   const bytes = (pod: PodSummary) => memory.get(`${pod.namespace}/${pod.name}`);
   return [
-    { header: "Name", cell: (pod) => <PodName pod={pod} /> },
-    { header: "Namespace", width: "w-[140px]", cell: (pod) => <Chip>{pod.namespace}</Chip> },
-    { header: "Status", width: "w-[170px]", cell: (pod) => <PodStatus pod={pod} /> },
     {
+      id: "name",
+      header: "Name",
+      minWidth: 200,
+      sortValue: (pod) => pod.name,
+      cell: (pod) => <PodName pod={pod} />,
+    },
+    {
+      id: "namespace",
+      header: "Namespace",
+      width: 140,
+      optional: true,
+      sortValue: (pod) => pod.namespace,
+      cell: (pod) => <Chip>{pod.namespace}</Chip>,
+    },
+    {
+      id: "status",
+      header: "Status",
+      width: 170,
+      sortValue: (pod) => pod.problem ?? pod.status,
+      cell: (pod) => <PodStatus pod={pod} />,
+    },
+    {
+      id: "ready",
       header: "Ready",
-      width: "w-[64px]",
+      width: 64,
       align: "right",
       cell: (pod) => `${pod.ready}/${pod.containers.length}`,
     },
     {
+      id: "restarts",
       header: "Restarts",
-      width: "w-[76px]",
+      width: 76,
       align: "right",
       cell: (pod) => (
         <span className={clsx(pod.restarts > 5 && "text-bad-ink")}>{pod.restarts}</span>
       ),
     },
     {
+      id: "memory",
       header: "Memory",
-      width: "w-[88px]",
+      width: 88,
       align: "right",
       cell: (pod) => (bytes(pod) ? formatMemory(bytes(pod) ?? 0) : <Dash />),
     },
     {
+      id: "age",
       header: "Age",
-      width: "w-[60px]",
+      width: 60,
       align: "right",
       cell: (pod) => <span className="text-ink-3">{formatAge(pod.createdAt)}</span>,
     },
     {
+      id: "actions",
       header: "Actions",
       hiddenHeader: true,
-      width: "w-[84px]",
+      width: 84,
       align: "right",
       cell: (pod) => (
         <PodActions pod={pod} menu={rowMenu(pod, show, open)} logs={() => show(pod, "logs")} />
@@ -139,7 +152,8 @@ export function PodsTable({ pods, open }: { pods: PodSummary[]; open: Open }) {
       search: tab ? { tab } : {},
     });
   return (
-    <ColumnTable
+    <DataTable
+      layoutKey="kube-pods"
       label="Pods"
       columns={columns(podMemory(containers, metrics), show, open)}
       menu={(pod) => rowMenu(pod, show, open)}

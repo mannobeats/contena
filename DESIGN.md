@@ -63,12 +63,26 @@ follows the system (dark designed first, light designed separately).
 
 ## Components
 
-Where: `design/css/base.css` (prototype). Buttons: ghost, default, soft, strong, brand,
-danger; sizes sm (24px), md (28px), lg (32px).
+Where: `design/css/base.css` (prototype), `apps/desktop/src/ui` (the app). Buttons: ghost,
+default, soft, strong, brand, danger; sizes sm (24px), md (28px), lg (32px).
+
+- **DataTable**: the one list. 36px rows, hairlines, a sticky header under the sticky filter row.
+  Columns resize by their edge (remembered), sort from the header, hide from its right-click menu,
+  and optional ones step aside, least useful first, when the window is narrow instead of the list
+  scrolling sideways. Selection boxes appear on hover or once something is picked.
+- **StatusLabel**: glyph, word, then when, quieter (`Crashed 255 · 31 hours ago`). The same in every
+  list. Green only on the running glyph; red only for crashed, failed, dead.
+- **The project stack**: a Compose project's header row is the stack itself, its containers' tiles
+  fanned like cards, a health strip with a mark per container (crashes first), and its CPU and
+  memory under those columns, memory with a bar in the project's ledger colour. Rows below drop the
+  project from their names (`shop-api-1` reads `api-1`).
+- **Notices**: one line per kind of problem, never one per object. Eleven crashes are one red line
+  with Show crashed, dismissable until something new crashes; the rows carry the detail.
 
 ## Icons and logos
 
 Three sources, each with one job:
+
 - **Contena icons** (`design/js/icons.js`, `cxIcon`) for Contena's own objects: container,
   image, volume, network, kube, pod, machine, data, domain, activity, settings, compose, layer.
   24px grid, 1.5px stroke, round joins, one soft fill (`.f`, the body) and one accent (`.a`, the

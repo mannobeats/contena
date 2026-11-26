@@ -1,6 +1,5 @@
 import {
   IconAppWindow,
-  IconDots,
   IconPlayerPlay,
   IconPlayerStop,
   IconPower,
@@ -21,7 +20,7 @@ import { logoFor } from "@/lib/logos";
 import { AppMark } from "@/ui/app-mark";
 import { Button } from "@/ui/button";
 import { IconAction } from "@/ui/icon-action";
-import { ContextMenu, Menu, type MenuEntry } from "@/ui/menu";
+import { ContextMenu, type MenuEntry, MoreMenu } from "@/ui/menu";
 import { Tile } from "@/ui/tile";
 
 const rowClass =
@@ -84,17 +83,7 @@ function Running() {
                 >
                   <IconPlayerStop />
                 </IconAction>
-                <Menu entries={menu} align="end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    iconOnly
-                    aria-label={`More for ${container.name}`}
-                    className="text-ink-3 hover:text-ink"
-                  >
-                    <IconDots />
-                  </Button>
-                </Menu>
+                <MoreMenu entries={menu} target={container.name} />
               </span>
               <span className="w-14 shrink-0 text-right text-12 text-ink-3 tabular">
                 {formatMemory(usage.get(container.id)?.memoryBytes ?? 0)}

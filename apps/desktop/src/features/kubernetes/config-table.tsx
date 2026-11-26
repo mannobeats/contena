@@ -2,8 +2,9 @@ import { copyText } from "@/lib/clipboard";
 import { formatAge } from "@/lib/format";
 import type { ConfigSummary } from "@/lib/ipc/bindings";
 import { Chip } from "@/ui/chip";
-import { type Column, ColumnTable } from "@/ui/column-table";
+import { DataTable } from "@/ui/data-table";
 import type { MenuEntry } from "@/ui/menu";
+import type { Column } from "@/ui/table-layout";
 import { Tile } from "@/ui/tile";
 
 import type { KubeSheet } from "./kube-sheet";
@@ -22,6 +23,7 @@ export function ConfigTable({
   ];
   const columns: Column<ConfigSummary>[] = [
     {
+      id: "name",
       header: "Name",
       cell: (item) => (
         <button
@@ -35,10 +37,16 @@ export function ConfigTable({
         </button>
       ),
     },
-    { header: "Namespace", width: "w-[140px]", cell: (item) => <Chip>{item.namespace}</Chip> },
     {
+      id: "namespace",
+      header: "Namespace",
+      width: 140,
+      cell: (item) => <Chip>{item.namespace}</Chip>,
+    },
+    {
+      id: "kind",
       header: "Kind",
-      width: "w-[170px]",
+      width: 170,
       cell: (item) =>
         item.kind === "secret" ? (
           <span>
@@ -49,6 +57,7 @@ export function ConfigTable({
         ),
     },
     {
+      id: "keys",
       header: "Keys",
       cell: (item) => (
         <span className="flex gap-1 overflow-hidden">
@@ -61,14 +70,16 @@ export function ConfigTable({
       ),
     },
     {
+      id: "age",
       header: "Age",
-      width: "w-[60px]",
+      width: 60,
       align: "right",
       cell: (item) => <span className="text-ink-3">{formatAge(item.createdAt)}</span>,
     },
   ];
   return (
-    <ColumnTable
+    <DataTable
+      layoutKey="kube-config"
       label="Config and secrets"
       columns={columns}
       rows={config}

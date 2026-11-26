@@ -1,4 +1,9 @@
-import { IconAlertTriangle, IconLayoutSidebarLeftCollapse, IconSearch } from "@tabler/icons-react";
+import {
+  IconAlertTriangle,
+  IconLayoutSidebarLeftCollapse,
+  IconSearch,
+  IconSelector,
+} from "@tabler/icons-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import clsx from "clsx";
@@ -45,11 +50,14 @@ function Item({ to, icon, label, count, exact = false }: ItemProps) {
           <CxIcon
             name={icon}
             accent={isActive}
-            className={clsx("transition-colors", isActive ? "text-brand" : "text-ink-3")}
+            className={clsx(
+              "size-[18px]! transition-colors",
+              isActive ? "text-brand" : "text-ink-3 group-hover:text-ink-2",
+            )}
           />
           <span className="truncate">{label}</span>
           {count === undefined ? null : (
-            <span className="ml-auto text-12 text-ink-3 tabular">{count}</span>
+            <span className="ml-auto text-12 font-[450] text-ink-3 tabular">{count}</span>
           )}
         </>
       )}
@@ -59,8 +67,12 @@ function Item({ to, icon, label, count, exact = false }: ItemProps) {
 
 function Group({ label, children }: { label?: string; children: ReactNode }) {
   return (
-    <div className="mt-3.5 first:mt-1">
-      {label ? <div className="px-2 pb-1 text-11 font-semibold text-ink-3">{label}</div> : null}
+    <div className="mt-5 flex flex-col gap-px first:mt-1">
+      {label ? (
+        <div className="px-2.5 pb-1 text-11 font-semibold tracking-[0.02em] text-ink-3">
+          {label}
+        </div>
+      ) : null}
       {children}
     </div>
   );
@@ -93,6 +105,27 @@ function engineLabel(status: EngineStatus | undefined): string {
     return "Docker engine from CONTENA_DOCKER_SOCKET";
   }
   return `Engine · ${status.config.cpus} CPUs · ${status.config.memoryGib} GB`;
+}
+
+/** The dot on the app mark: green while the engine runs, amber on the way, red when it's broken. */
+function EngineGlyph({ phase }: { phase: EnginePhase | undefined }) {
+  let tone = "bg-ink-4";
+  if (phase === "running" || phase === "external") {
+    tone = "bg-ok";
+  } else if (phase === "starting" || phase === "stopping") {
+    tone = "animate-pulse bg-warn";
+  } else if (phase === "broken") {
+    tone = "bg-bad";
+  }
+  return (
+    <span
+      aria-hidden
+      className={clsx(
+        "absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full shadow-[0_0_0_2px_var(--panel-solid)]",
+        tone,
+      )}
+    />
+  );
 }
 
 function EngineCard() {
@@ -145,9 +178,12 @@ function EngineCard() {
     <Menu entries={entries}>
       <button
         type="button"
-        className="mx-2.5 mb-2 flex items-center gap-2.5 rounded-md px-2.5 py-2 text-left data-[state=open]:bg-sidebar-active"
+        className="mx-2.5 mb-2.5 flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors duration-140 hover:bg-sidebar-hover data-[state=open]:bg-sidebar-active"
       >
-        <AppMark size={28} />
+        <span className="relative shrink-0 drop-shadow-[0_1px_2px_oklch(0_0_0/0.25)]">
+          <AppMark size={32} />
+          <EngineGlyph phase={phase} />
+        </span>
         <span className="min-w-0 flex-1">
           <b className="block text-13 leading-tight font-semibold text-ink">Contena</b>
           <span
@@ -160,6 +196,7 @@ function EngineCard() {
             {engineLine(phase, isError)}
           </span>
         </span>
+        <IconSelector aria-hidden className="size-3.5! text-ink-4" />
       </button>
     </Menu>
   );
@@ -222,17 +259,14 @@ export function Sidebar() {
   const { data: networks } = useNetworks();
   return (
     <aside className="flex min-h-0 min-w-0 flex-col border-r-[0.5px] border-[light-dark(oklch(0_0_0/0.1),oklch(0_0_0/0.5))] bg-panel">
-      <div
-        data-tauri-drag-region
-        className="flex h-[52px] shrink-0 items-center justify-end px-2.5"
-      >
+      <div data-tauri-drag-region className="flex h-[52px] shrink-0 items-center justify-end px-3">
         <Tip label="Hide sidebar" kbd="⌘\">
           <Button
             variant="ghost"
             iconOnly
             onClick={toggle}
             aria-label="Hide sidebar"
-            className="text-ink-3"
+            className="text-ink-3 hover:text-ink [&_.tabler-icon]:size-[19px]"
           >
             <IconLayoutSidebarLeftCollapse />
           </Button>
@@ -242,7 +276,7 @@ export function Sidebar() {
       <button
         type="button"
         onClick={() => openPalette(true)}
-        className="mx-2.5 mb-1.5 flex h-7 items-center gap-[7px] rounded-[7px] bg-sidebar-hover px-2 text-13 text-ink-3"
+        className="mx-2.5 mb-2 flex h-8 items-center gap-2 rounded-md bg-sidebar-hover px-2.5 text-13 text-ink-3 shadow-[inset_0_0_0_0.5px_light-dark(oklch(0_0_0/0.06),oklch(1_0_0/0.06))] transition-colors duration-140 hover:bg-sidebar-active hover:text-ink-2"
       >
         <IconSearch aria-hidden />
         <span className="truncate">Search</span>

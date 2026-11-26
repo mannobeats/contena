@@ -4,51 +4,16 @@ import { useState } from "react";
 import { BuildSheet } from "@/features/images/build-sheet";
 import { useImageSheet } from "@/features/images/sheet-store";
 import { plural } from "@/lib/format";
-import type { BuildRecord } from "@/lib/ipc/bindings";
-import { useNow } from "@/lib/use-now";
 import { Crumb, Page } from "@/shell/page";
 import { Button } from "@/ui/button";
 import { ConfirmSheet } from "@/ui/confirm-sheet";
 import { EmptyState } from "@/ui/empty-state";
 import { Lede, PageHeading } from "@/ui/page-heading";
-import { HeadRow, Table } from "@/ui/table";
 import { Tile } from "@/ui/tile";
 
 import { useBuilds, useClearBuilds } from "./api";
-import { BuildRow } from "./build-row";
-import { runningCount, sortBuilds } from "./model";
-
-function BuildTable({ builds }: { builds: BuildRecord[] }) {
-  const running = runningCount(builds) > 0;
-  const now = useNow(running);
-  return (
-    <Table label="Builds">
-      <colgroup>
-        <col />
-        <col className="w-[120px]" />
-        <col className="w-[150px]" />
-        <col className="w-[140px]" />
-        <col className="w-[140px]" />
-        <col className="w-[52px]" />
-      </colgroup>
-      <HeadRow>
-        <th>Name</th>
-        <th>Status</th>
-        <th>Started</th>
-        <th>Cache</th>
-        <th className="text-right!">Duration</th>
-        <th>
-          <span className="sr-only">Actions</span>
-        </th>
-      </HeadRow>
-      <tbody>
-        {sortBuilds(builds).map((build) => (
-          <BuildRow key={build.id} build={build} now={now} />
-        ))}
-      </tbody>
-    </Table>
-  );
-}
+import { BuildTable } from "./build-table";
+import { runningCount } from "./model";
 
 function ClearHistory({ disabled }: { disabled: boolean }) {
   const [open, setOpen] = useState(false);

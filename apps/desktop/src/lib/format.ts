@@ -66,3 +66,6 @@ export function formatAge(epochSeconds: number, now: number = Date.now()): strin
 export function plural(count: number, one: string, many = `${one}s`): string {
   return `${count} ${count === 1 ? one : many}`;
 }
+
+/** `postgres:18-alpine@sha256:4f…` → `postgres:18-alpine`: the digest pins it, the tag names it. */
+export const shortImage = (image: string) => image.replace(/@sha256:[0-9a-f]+$/, "");

@@ -37,7 +37,14 @@ describe("volumes", () => {
       totalBytes: 400,
       unattached: 2,
       unattachedBytes: 100,
+      anonymous: 1,
     });
+  });
+
+  it("filters to anonymous volumes, the ones a cleanup usually goes after", () => {
+    const hash = volumeFixture({ name: "a".repeat(64), anonymous: true });
+    expect(matchesVolume(hash, "anonymous", "")).toBe(true);
+    expect(matchesVolume(attached, "anonymous", "")).toBe(false);
   });
 
   it("checks new names", () => {

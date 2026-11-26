@@ -2,34 +2,27 @@ import { IconDownload, IconHammer, IconTrash } from "@tabler/icons-react";
 import { type ReactNode, useState } from "react";
 import { useContainers } from "@/features/containers/api";
 import { formatBytes } from "@/lib/format";
-import type { ContainerSummary, ImageSummary } from "@/lib/ipc/bindings";
+import type { ImageSummary } from "@/lib/ipc/bindings";
 import { errorMessage } from "@/lib/ipc/errors";
-import { type Selection, useSelection, useSelectionKeys } from "@/lib/use-selection";
+import { useSelection } from "@/lib/use-selection";
 import { Crumb, Page } from "@/shell/page";
+import { BulkDelete } from "@/ui/bulk-delete";
 import { Button } from "@/ui/button";
-import { DeleteManySheet } from "@/ui/delete-many-sheet";
 import { EmptyState } from "@/ui/empty-state";
-import { ListToolbar } from "@/ui/list-toolbar";
+import { ListSection } from "@/ui/list-section";
 import { Lede, PageHeading } from "@/ui/page-heading";
 import { Segmented } from "@/ui/segmented";
-import { SelectionBar } from "@/ui/selection-bar";
-import { HeadRow, SelectAll, Table } from "@/ui/table";
+import { useRowOrder } from "@/ui/table-layout";
 import { Tile } from "@/ui/tile";
 import { Tip } from "@/ui/tooltip";
 import { UsageBar, UsageLegend } from "@/ui/usage-bar";
 
 import { useImages, useRemoveImages } from "./api";
 import type { ImageDialog } from "./image-actions";
+import { IMAGES_TABLE, imageColumns } from "./image-columns";
 import { ImageDialogs } from "./image-dialogs";
-import { type ImageHandlers, ImageRow } from "./image-row";
-import {
-  type ImageFilter,
-  type ImageStats,
-  imageLabel,
-  imageStats,
-  matchesImage,
-  usersOf,
-} from "./model";
+import { ImageTable } from "./image-table";
+import { type ImageFilter, type ImageStats, imageLabel, imageStats, matchesImage } from "./model";
 import { useImageSheet } from "./sheet-store";
 
 function DiskUsage({ stats, onClean }: { stats: ImageStats; onClean: () => void }) {
@@ -64,52 +57,6 @@ function DiskUsage({ stats, onClean }: { stats: ImageStats; onClean: () => void 
   );
 }
 
-type ImageTableProps = ImageHandlers & {
-  images: ImageSummary[];
-  containers: ContainerSummary[];
-  selection: Selection;
-};
-
-function ImageTable({ images, containers, selection, ...handlers }: ImageTableProps) {
-  return (
-    <Table label="Images">
-      <colgroup>
-        <col className="w-11" />
-        <col />
-        <col className="w-[120px]" />
-        <col className="w-[130px]" />
-        <col className="w-[90px]" />
-        <col className="w-[130px]" />
-        <col className="w-[220px]" />
-        <col className="w-[84px]" />
-      </colgroup>
-      <HeadRow>
-        <SelectAll selection={selection} label="Select all images that aren't in use" />
-        <th>Repository</th>
-        <th>Tag</th>
-        <th>Image ID</th>
-        <th className="text-right!">Size</th>
-        <th>Created</th>
-        <th>Used by</th>
-        <th>
-          <span className="sr-only">Actions</span>
-        </th>
-      </HeadRow>
-      <tbody>
-        {images.map((image) => (
-          <ImageRow
-            key={image.id}
-            image={image}
-            users={usersOf(image, containers)}
-            selection={selection}
-            {...handlers}
-          />
-        ))}
-      </tbody>
-    </Table>
-  );
-}
-
 function filterOptions(stats: ImageStats) {
   const all = stats.used.count + stats.unused.count + stats.dangling.count;
   return [
@@ -133,19 +80,21 @@ function ImageList({ images, stats, onDialog, pull }: ImageListProps) {
   const [filter, setFilter] = useState<ImageFilter>("all");
   const [query, setQuery] = useState("");
   const visible = images.filter((image) => matchesImage(image, filter, query));
+  const columns = imageColumns(containers ?? []);
+  const order = useRowOrder(IMAGES_TABLE, columns);
   const selection = useSelection(
-    visible.filter((image) => image.containers === 0).map((image) => image.id),
+    order(visible)
+      .filter((image) => image.containers === 0)
+      .map((image) => image.id),
   );
-  const [deleting, setDeleting] = useState<ImageSummary[]>([]);
   const removeMany = useRemoveImages();
   const chosen = visible.filter((image) => selection.has(image.id));
-  useSelectionKeys(selection, () => setDeleting(chosen));
   return (
     <>
       <PageHeading title="Images" action={pull}>
         <DiskUsage stats={stats} onClean={() => setSheet("prune")} />
       </PageHeading>
-      <ListToolbar
+      <ListSection
         query={query}
         onQuery={setQuery}
         placeholder="Filter images"
@@ -157,37 +106,27 @@ function ImageList({ images, stats, onDialog, pull }: ImageListProps) {
             options={filterOptions(stats)}
           />
         }
-      />
-      <div className="pb-[72px]">
+      >
         {visible.length === 0 ? (
           <EmptyState title="No images match this filter" />
         ) : (
           <ImageTable
             images={visible}
-            containers={containers ?? []}
+            columns={columns}
             selection={selection}
             onDialog={onDialog}
           />
         )}
-      </div>
-      <SelectionBar count={chosen.length} label="Selected images" onClear={selection.clear}>
-        <Button variant="dangerGhost" size="sm" onClick={() => setDeleting(chosen)}>
-          <IconTrash />
-          Delete
-        </Button>
-      </SelectionBar>
-      <DeleteManySheet
-        names={deleting.map(imageLabel)}
+      </ListSection>
+      <BulkDelete
+        selection={selection}
+        chosen={chosen}
         noun="image"
-        onCancel={() => setDeleting([])}
-        onConfirm={() => {
-          removeMany.mutate(deleting);
-          setDeleting([]);
-          selection.clear();
-        }}
+        name={imageLabel}
+        onDelete={(items) => removeMany.mutate(items)}
       >
         Every tag on them is removed. Layers other images share stay. This can't be undone.
-      </DeleteManySheet>
+      </BulkDelete>
     </>
   );
 }

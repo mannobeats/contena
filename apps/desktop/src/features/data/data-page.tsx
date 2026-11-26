@@ -88,7 +88,9 @@ function Connections({ query, onNew, onEdit, onRemove }: ConnectionsProps) {
           )}
         </Section>
         <Section title="Saved connections" note="Passwords are stored in your macOS Keychain.">
-          <SavedTable connections={shownSaved} onEdit={onEdit} onRemove={onRemove} />
+          {shownSaved.length > 0 ? (
+            <SavedTable connections={shownSaved} onEdit={onEdit} onRemove={onRemove} />
+          ) : null}
           <p className="mx-5 mt-3 flex items-center gap-2 rounded-md border border-dashed border-line-strong px-3 py-2.5 text-12 text-ink-3">
             <IconFileDatabase aria-hidden />
             Drop a .sqlite or .db file anywhere here to open it.

@@ -1,7 +1,7 @@
 import { plural } from "@/lib/format";
 import type { VolumeFile, VolumeSummary } from "@/lib/ipc/bindings";
 
-export type VolumeFilter = "all" | "used" | "unused";
+export type VolumeFilter = "all" | "used" | "unused" | "anonymous";
 
 export function volumeName(volume: VolumeSummary): string {
   return volume.anonymous ? `${volume.name.slice(0, 12)}…` : volume.name;
@@ -10,6 +10,9 @@ export function volumeName(volume: VolumeSummary): string {
 export function matchesVolume(volume: VolumeSummary, filter: VolumeFilter, query: string): boolean {
   const used = volume.usedBy.length > 0;
   if ((filter === "used" && !used) || (filter === "unused" && used)) {
+    return false;
+  }
+  if (filter === "anonymous" && !volume.anonymous) {
     return false;
   }
   const needle = query.trim().toLowerCase();
@@ -29,6 +32,7 @@ export function volumeStats(volumes: VolumeSummary[]) {
     count: volumes.length,
     totalBytes: size(volumes),
     unattached: unattached.length,
+    anonymous: volumes.filter((volume) => volume.anonymous).length,
     unattachedBytes: size(unattached),
   };
 }

@@ -59,6 +59,11 @@ afterEach(() => {
 const sidebarHidden = () =>
   screen.getByRole("button", { name: "Hide sidebar" }).closest("[inert]") !== null;
 
+/** A page that shows one fixed moment through the app's clock. */
+function Stamp() {
+  return <p>{formatClock(Date.parse("2026-10-18T02:54:00Z"))}</p>;
+}
+
 describe("AppShell", () => {
   it("shows the page while the engine runs", async () => {
     renderShell("running");
@@ -144,7 +149,6 @@ describe("AppShell", () => {
   it("redraws the page's times on the Mac's clock, or in UTC once Settings says so", async () => {
     vi.stubEnv("TZ", "America/Los_Angeles");
     let timeZone: Preferences["timeZone"] = "mac";
-    const Stamp = () => <p>{formatClock(Date.parse("2026-10-18T02:54:00Z"))}</p>;
     renderShell("running", {
       preferences: () => preferencesFixture({ timeZone }),
       page: <Stamp />,

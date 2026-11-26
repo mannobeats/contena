@@ -42,13 +42,13 @@ export const dataKeys = {
 } as const;
 
 export function useConnections() {
-  return useQuery({ queryKey: dataKeys.connections, queryFn: commands.dataConnections });
+  return useQuery({ queryKey: dataKeys.connections, queryFn: () => commands.dataConnections() });
 }
 
 export function useDetected() {
   return useQuery({
     queryKey: dataKeys.detected,
-    queryFn: commands.dataDetected,
+    queryFn: () => commands.dataDetected(),
     refetchInterval: 15_000,
   });
 }
@@ -203,11 +203,11 @@ export function useCancelQuery() {
 }
 
 export function useHistory() {
-  return useQuery({ queryKey: dataKeys.history, queryFn: commands.dataHistory });
+  return useQuery({ queryKey: dataKeys.history, queryFn: () => commands.dataHistory() });
 }
 
 export function useSavedQueries() {
-  return useQuery({ queryKey: dataKeys.saved, queryFn: commands.dataSavedQueries });
+  return useQuery({ queryKey: dataKeys.saved, queryFn: () => commands.dataSavedQueries() });
 }
 
 export function useSaveQuery() {
@@ -298,7 +298,7 @@ type TableChange = {
 function useTableChange(id: string, { run, done, failed }: TableChange) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: run,
+    mutationFn: (table: TableRef) => run(table),
     onSuccess: (schema, table) => {
       toast.success(`${done} ${table.name}`);
       client.setQueryData(dataKeys.schema(id), schema);

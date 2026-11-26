@@ -14,7 +14,7 @@ export function useBuilds() {
   const { data: engine } = useEngineStatus();
   return useQuery({
     queryKey: queryKeys.builds,
-    queryFn: commands.buildsList,
+    queryFn: () => commands.buildsList(),
     enabled: isServing(engine?.phase),
     refetchInterval: (query) => (runningCount(query.state.data) > 0 ? 2000 : 10_000),
   });

@@ -6,7 +6,7 @@ This is the reference. Adapt the patterns to your stack; keep the contract ident
 
 ## Contract
 
-- **Input:** the diff between the merge base and the working tree (added *and* removed lines, plus untracked files). A guard that reads only `git diff` misses new files and staged-but-uncommitted work.
+- **Input:** the diff between the merge base and the working tree (added _and_ removed lines, plus untracked files). A guard that reads only `git diff` misses new files and staged-but-uncommitted work.
 - **Detects the five Step 6 moves:** a weakened threshold in `CONSTRAINTS.md`, a test made easier (`.skip`, a deleted test file, an assertion removed from a test that stayed), a silenced checker (a new suppression comment), unfinished work (a stub or empty `catch`), a new Exceptions row.
 - **Exit codes:** `0` clean, `1` at least one floor violation (block the change), `2` the guard could not run (no merge base, not a git repo). Never let a `2` read as a `0`.
 - **Reports the rule and the location, never the matched secret value.** Redaction is not optional (Step 4).

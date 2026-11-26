@@ -87,7 +87,7 @@ describe("DomainsPage", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Set up names" }));
     await called(calls, "domainsInstallResolver");
     await userEvent.click(screen.getByRole("button", { name: "Trust certificate" }));
-    await called(calls, "domainsTrustCa");
+    await waitFor(() => expect(calls.map((call) => call.command)).toContain("domainsTrustCa"));
   });
 
   it("adds a route and refuses an invalid name", async () => {

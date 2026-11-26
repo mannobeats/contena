@@ -10,14 +10,14 @@ pnpm install
 pnpm dev
 ```
 
-| Variable | Effect |
-|---|---|
-| `CONTENA_DOCKER_SOCKET` | Use this Docker socket instead of starting Contena's engine. |
-| `CONTENA_KUBE_CONTEXT` | Use this kubeconfig context instead of the engine's `contena`, and treat Kubernetes as on. |
-| `CONTENA_HOME` | Where engine state lives. Default `~/.contena`. |
-| `CONTENA_ENGINE` | Path to a `contena-engine` to run instead of the bundled one. |
+| Variable                       | Effect                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `CONTENA_DOCKER_SOCKET`        | Use this Docker socket instead of starting Contena's engine.                                                             |
+| `CONTENA_KUBE_CONTEXT`         | Use this kubeconfig context instead of the engine's `contena`, and treat Kubernetes as on.                               |
+| `CONTENA_HOME`                 | Where engine state lives. Default `~/.contena`.                                                                          |
+| `CONTENA_ENGINE`               | Path to a `contena-engine` to run instead of the bundled one.                                                            |
 | `CONTENA_VMM`, `CONTENA_GUEST` | For the engine: the VM helper and the folder with the guest's `Image` and `rootfs.erofs`, instead of the ones beside it. |
-| `RUST_LOG` | Rust log filter, for example `info` or `contena_app=debug`. |
+| `RUST_LOG`                     | Rust log filter, for example `info` or `contena_app=debug`.                                                              |
 
 Cargo never deletes a build it has replaced, so `target/` keeps growing with every dependency or
 toolchain update. Run `cargo clean` now and then; the next `pnpm check` rebuilds what it needs.

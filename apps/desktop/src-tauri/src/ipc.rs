@@ -15,6 +15,8 @@ use crate::events::{
 pub(crate) fn builder() -> Builder<Wry> {
     Builder::<Wry>::new()
         .error_handling(ErrorHandlingMode::Throw)
+        // Every type goes to the UI and back in the same shape, so one TypeScript type each.
+        .disable_serde_phases()
         .typ::<crate::error::CommandError>()
         .commands(commands())
         .events(collect_events![

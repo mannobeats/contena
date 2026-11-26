@@ -202,7 +202,14 @@ describe("KubernetesPage", () => {
     const calls = setup();
     await userEvent.click(await screen.findByRole("button", { name: "Apply YAML" }));
     await userEvent.click(await screen.findByRole("button", { name: "Apply" }));
-    await sent(calls, "kubernetesApply", { namespace: "default", dryRun: false });
+    await waitFor(() =>
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          command: "kubernetesApply",
+          args: expect.objectContaining({ namespace: "default", dryRun: false }),
+        }),
+      ),
+    );
   });
 
   it("asks before resetting the cluster", async () => {
@@ -373,6 +380,13 @@ describe("KubernetesPage", () => {
     await userEvent.click(within(await edit()).getByRole("button", { name: "Cancel" }));
     replicas = 5;
     await userEvent.click(within(await edit()).getByRole("button", { name: "Apply" }));
-    await sent(calls, "kubernetesApply", { manifest: storefrontYaml(5) });
+    await waitFor(() =>
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          command: "kubernetesApply",
+          args: expect.objectContaining({ manifest: storefrontYaml(5) }),
+        }),
+      ),
+    );
   });
 });

@@ -2,12 +2,12 @@
 
 ## Layers
 
-| Layer | Where | Job |
-|---|---|---|
-| UI | `apps/desktop/src` | React views. Reads state through TanStack Query, never holds a copy of engine state. |
-| App shell | `apps/desktop/src-tauri` | Tauri commands, events, streams, tray, windows. Thin: translates between the UI and the crates. |
-| Domain crates | `crates/*` | One per engine area. Plain async Rust, no Tauri types, testable without a window. |
-| Engine | `crates/engine`, `vmm/`, `guest/`, `crates/agent` | Contena's own: a VM that runs the unmodified Docker Engine. See "The engine" below. |
+| Layer         | Where                                             | Job                                                                                             |
+| ------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| UI            | `apps/desktop/src`                                | React views. Reads state through TanStack Query, never holds a copy of engine state.            |
+| App shell     | `apps/desktop/src-tauri`                          | Tauri commands, events, streams, tray, windows. Thin: translates between the UI and the crates. |
+| Domain crates | `crates/*`                                        | One per engine area. Plain async Rust, no Tauri types, testable without a window.               |
+| Engine        | `crates/engine`, `vmm/`, `guest/`, `crates/agent` | Contena's own: a VM that runs the unmodified Docker Engine. See "The engine" below.             |
 
 `crates/docker` wraps the Docker Engine API (`bollard`). The areas (Kubernetes, Linux machines,
 data browser, domains) each get their own crate; the app shell composes them.

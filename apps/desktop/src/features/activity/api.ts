@@ -24,7 +24,7 @@ export function useMetricsHistory() {
   });
   return useQuery({
     queryKey: key,
-    queryFn: commands.metricsHistory,
+    queryFn: () => commands.metricsHistory(),
     staleTime: Number.POSITIVE_INFINITY,
   });
 }

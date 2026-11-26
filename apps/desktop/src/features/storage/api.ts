@@ -14,7 +14,7 @@ const keys = {
 } as const;
 
 export function useDataLocation() {
-  return useQuery({ queryKey: keys.location, queryFn: commands.storageLocation });
+  return useQuery({ queryKey: keys.location, queryFn: () => commands.storageLocation() });
 }
 
 /**
@@ -24,7 +24,7 @@ export function useDataLocation() {
 export function useDiskUsage() {
   return useQuery({
     queryKey: keys.usage,
-    queryFn: commands.storageUsage,
+    queryFn: () => commands.storageUsage(),
     retry: false,
     refetchInterval: 15_000,
   });

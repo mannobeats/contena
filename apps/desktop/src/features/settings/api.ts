@@ -36,13 +36,13 @@ export function openSettings(pane: SettingsPane) {
 /** The pane Rust says to show: read once on open, then pushed when the menu or a link asks. */
 export function useShownPane(): SettingsPane {
   const client = useQueryClient();
-  const { data } = useQuery({ queryKey: keys.pane, queryFn: commands.settingsPane });
+  const { data } = useQuery({ queryKey: keys.pane, queryFn: () => commands.settingsPane() });
   useTauriEvent(events.settingsPaneShown, (pane) => client.setQueryData(keys.pane, pane));
   return data ?? "general";
 }
 
 export function usePreferences() {
-  return useQuery({ queryKey: keys.preferences, queryFn: commands.preferencesGet });
+  return useQuery({ queryKey: keys.preferences, queryFn: () => commands.preferencesGet() });
 }
 
 /** Saves at once and shows the new value before the write finishes. */
@@ -59,13 +59,13 @@ export function useSetPreferences() {
 export function useHost() {
   return useQuery({
     queryKey: keys.host,
-    queryFn: commands.hostInfo,
+    queryFn: () => commands.hostInfo(),
     staleTime: Number.POSITIVE_INFINITY,
   });
 }
 
 export function useAbout() {
-  return useQuery({ queryKey: keys.about, queryFn: commands.about });
+  return useQuery({ queryKey: keys.about, queryFn: () => commands.about() });
 }
 
 export function useLaunchAtLogin() {
@@ -81,13 +81,13 @@ export function useLaunchAtLogin() {
 }
 
 export function useCliTools() {
-  return useQuery({ queryKey: keys.cliTools, queryFn: commands.cliTools });
+  return useQuery({ queryKey: keys.cliTools, queryFn: () => commands.cliTools() });
 }
 
 export function useInstallTools() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: commands.cliToolsInstall,
+    mutationFn: () => commands.cliToolsInstall(),
     onSuccess: () => toast.success("Installed the command-line tools"),
     onError: (error) => {
       if (!(isCommandError(error) && error.kind === "cancelled")) {
@@ -138,7 +138,7 @@ export function useClockSync() {
   const { data: preferences } = usePreferences();
   const { data: mac } = useQuery({
     queryKey: keys.clock,
-    queryFn: commands.clock,
+    queryFn: () => commands.clock(),
     staleTime: Number.POSITIVE_INFINITY,
   });
   const utc = preferences?.timeZone === "utc";
